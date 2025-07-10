@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Member Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="welcome_animation.css" />
+  <script src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-dark bg-primary">
+    <div class="container-fluid">
+      <span class="navbar-brand">Dashboard</span>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <!-- Welcome Animation -->
+    <div class="welcome-box text-center mb-4" id="welcomeBox">
+      <h2 id="welcomeMessage">Welcome!</h2>
+      <p id="roleTier" class="lead"></p>
+    </div>
+
+    <!-- TradingView Chart -->
+    <div class="mb-4">
+      <div id="tradingview_chart" style="height: 500px;"></div>
+    </div>
+
+    <!-- Signal List -->
+    <div class="card">
+      <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">📢 All Trading Signals</h5>
+      </div>
+      <div class="card-body" id="signalList">
+        <!-- signals will appear here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("welcomeMessage").textContent = `Welcome, ${user.username} 👋`;
+    document.getElementById("roleTier").textContent = `You are logged in as: ${user.role.toUpperCase()}`;
+    document.getElementById("welcomeBox").classList.add(`tier-${user.role}`);
+
+    // Load TradingView Chart
+    new TradingView.widget({
+      autosize: true,
+      symbol: "BINANCE:BTCUSDT",
+      interval: "30",
+      timezone: "Etc/UTC",
+      theme: "light",
+      style: "1",
+      locale: "en",
+      toolbar_bg: "#f1f3f6",
+      enable_publishing: false,
+      hide_side_toolbar: false,
+      hide_top_toolbar: false,
+      allow_symbol_change: true,
+      container_id: "tradingview_chart"
+    });
+
+    // Load Signals
+    const signals = JSON.parse(localStorage.getItem("signals")) || [];
+    const signalList = document.getElementById("signalList");
+
+    if (signals.length === 0) {
+      signalList.innerHTML = "<p class='text-muted'>No signals yet.</p>";
+    } else {
+      signalList.innerHTML = signals.map(signal => `
+        <div class="border rounded p-3 mb-3 bg-${signal.action === 'buy' ? 'success' : 'danger'} bg-opacity-10">
+          <strong>${signal.pair}</strong> - ${signal.action.toUpperCase()}<br/>
+          Entry: $${signal.entry} | TP: $${signal.tp} | SL: $${signal.sl}<br/>
+          <small class="text-muted">${signal.time}</small><br/>
+          <em>${signal.notes}</em>
+        </div>
+      `).join('');
+    }
+
+    function logout() {
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+  </script>
+</body>
+</html>

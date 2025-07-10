@@ -1,0 +1,162 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Trading Journal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    .logo-img {
+      width: 24px;
+      height: 24px;
+      margin-right: 5px;
+    }
+    .trade-card {
+      border-left: 5px solid;
+    }
+    .trade-card.buy {
+      border-color: #198754;
+      background-color: #e9f7ef;
+    }
+    .trade-card.sell {
+      border-color: #dc3545;
+      background-color: #fbeaea;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <span class="navbar-brand">📘 Trading Journal</span>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container my-4">
+    <h3 class="mb-3">Add Trade Entry</h3>
+    <form id="journalForm" class="row g-3">
+      <div class="col-md-3">
+        <input type="text" class="form-control" id="pair" placeholder="Pair (e.g. BTCUSDT)" required>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="action" required>
+          <option value="buy">Buy</option>
+          <option value="sell">Sell</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <input type="number" step="0.0001" class="form-control" id="entry" placeholder="Entry Price" required>
+      </div>
+      <div class="col-md-2">
+        <input type="number" step="0.0001" class="form-control" id="exit" placeholder="Exit Price" required>
+      </div>
+      <div class="col-md-2">
+        <input type="number" step="0.0001" class="form-control" id="lot" placeholder="Lot Size" required>
+      </div>
+      <div class="col-md-1 d-grid">
+        <button type="submit" class="btn btn-primary">Add</button>
+      </div>
+    </form>
+
+    <div class="mt-4">
+      <h4 class="mb-3">My Trades</h4>
+      <input type="text" class="form-control mb-3" id="search" placeholder="Search by pair..." />
+      <div id="cardContainer" class="row g-3"></div>
+      <div id="totalPnl" class="fw-bold fs-5 mt-4 text-end"></div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
+      alert("Please login first.");
+      window.location.href = "login.html";
+    }
+
+    const form = document.getElementById("journalForm");
+    const container = document.getElementById("cardContainer");
+    const search = document.getElementById("search");
+    const totalPnl = document.getElementById("totalPnl");
+
+    let journalKey = "journal_" + user.username;
+    let trades = JSON.parse(localStorage.getItem(journalKey)) || [];
+
+    function getLogo(pair) {
+      const base = pair.toUpperCase().replace(/USDT|USD|USDC|BUSD/, '');
+      return `<img src="https://cryptoicon-api.pages.dev/api/icon/${base.toLowerCase()}" class="logo-img" onerror="this.style.display='none'">`;
+    }
+
+    function calculatePnl(trade) {
+      const diff = trade.action === "buy" ? trade.exit - trade.entry : trade.entry - trade.exit;
+      return +(diff * trade.lot).toFixed(2);
+    }
+
+    function renderCards() {
+      const keyword = search.value.toLowerCase();
+      let total = 0;
+      container.innerHTML = "";
+
+      trades
+        .filter(t => t.pair.toLowerCase().includes(keyword))
+        .forEach(t => {
+          const pnl = calculatePnl(t);
+          total += pnl;
+
+          const card = document.createElement("div");
+          card.className = `col-md-6`;
+
+          card.innerHTML = `
+            <div class="card shadow-sm trade-card ${t.action}">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                  <h5>${getLogo(t.pair)} ${t.pair.toUpperCase()}</h5>
+                  <span class="badge bg-${t.action === 'buy' ? 'success' : 'danger'}">${t.action.toUpperCase()}</span>
+                </div>
+                <p class="mb-1">
+                  Entry: <strong>$${t.entry}</strong><br/>
+                  Exit: <strong>$${t.exit}</strong><br/>
+                  Lot: <strong>${t.lot}</strong>
+                </p>
+                <p class="mb-2">
+                  P/L: <span class="fw-bold ${pnl >= 0 ? 'text-success' : 'text-danger'}">$${pnl}</span>
+                </p>
+                <small class="text-muted">${t.time}</small>
+              </div>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+
+      totalPnl.innerHTML = `Total P/L: <span class="${total >= 0 ? 'text-success' : 'text-danger'}">$${total.toFixed(2)}</span>`;
+    }
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const trade = {
+        pair: pair.value.trim(),
+        action: action.value,
+        entry: parseFloat(entry.value),
+        exit: parseFloat(exit.value),
+        lot: parseFloat(lot.value),
+        time: new Date().toLocaleString()
+      };
+
+      trades.unshift(trade);
+      localStorage.setItem(journalKey, JSON.stringify(trades));
+      form.reset();
+      renderCards();
+    });
+
+    search.addEventListener("input", renderCards);
+
+    function logout() {
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+
+    renderCards();
+  </script>
+</body>
+</html>

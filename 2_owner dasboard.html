@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Owner Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="welcome_animation.css" />
+  <script src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body class="bg-light">
+  <nav class="navbar navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">Owner Dashboard</a>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <!-- Welcome Animation -->
+    <div class="welcome-box text-center mb-4" id="welcomeBox">
+      <h2 id="welcomeMessage">Welcome!</h2>
+      <p id="roleTier" class="lead"></p>
+    </div>
+
+    <!-- TradingView Chart -->
+    <div class="mb-4">
+      <div id="tradingview_chart" style="height: 500px;"></div>
+    </div>
+
+    <!-- Signal Submission Form -->
+    <div class="card mt-4">
+      <div class="card-header bg-success text-white">
+        <h5>📩 Submit Trading Signal</h5>
+      </div>
+      <div class="card-body">
+        <form id="signalForm">
+          <div class="mb-2">
+            <label>Pair</label>
+            <input type="text" class="form-control" id="pair" required />
+          </div>
+          <div class="mb-2">
+            <label>Action</label>
+            <select class="form-select" id="action" required>
+              <option value="buy">Buy</option>
+              <option value="sell">Sell</option>
+            </select>
+          </div>
+          <div class="mb-2">
+            <label>Entry</label>
+            <input type="number" class="form-control" id="entry" step="0.01" required />
+          </div>
+          <div class="mb-2">
+            <label>Take Profit (TP)</label>
+            <input type="number" class="form-control" id="tp" step="0.01" required />
+          </div>
+          <div class="mb-2">
+            <label>Stop Loss (SL)</label>
+            <input type="number" class="form-control" id="sl" step="0.01" required />
+          </div>
+          <div class="mb-2">
+            <label>Notes</label>
+            <textarea class="form-control" id="notes"></textarea>
+          </div>
+          <button type="submit" class="btn btn-success">Send Signal</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user || user.role !== "owner") {
+      alert("⛔ Access denied.");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("welcomeMessage").textContent = `Welcome, ${user.username} 👋`;
+    document.getElementById("roleTier").textContent = `You are logged in as: ${user.role.toUpperCase()}`;
+    document.getElementById("welcomeBox").classList.add(`tier-${user.role}`);
+
+    new TradingView.widget({
+      autosize: true,
+      symbol: "BINANCE:BTCUSDT",
+      interval: "30",
+      timezone: "Etc/UTC",
+      theme: "light",
+      style: "1",
+      locale: "en",
+      toolbar_bg: "#f1f3f6",
+      enable_publishing: false,
+      hide_side_toolbar: false,
+      hide_top_toolbar: false,
+      allow_symbol_change: true,
+      container_id: "tradingview_chart"
+    });
+
+    function logout() {
+      localStorage.removeItem("currentUser");
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("signalForm").addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      const pair = document.getElementById("pair").value.trim();
+      const action = document.getElementById("action").value;
+      const entry = parseFloat(document.getElementById("entry").value);
+      const tp = parseFloat(document.getElementById("tp").value);
+      const sl = parseFloat(document.getElementById("sl").value);
+      const notes = document.getElementById("notes").value.trim();
+
+      const signals = JSON.parse(localStorage.getItem("signals")) || [];
+
+      const newSignal = {
+        pair,
+        action,
+        entry,
+        tp,
+        sl,
+        notes,
+        time: new Date().toLocaleString()
+      };
+
+      signals.unshift(newSignal);
+      localStorage.setItem("signals", JSON.stringify(signals));
+      alert("✅ Signal submitted!");
+      document.getElementById("signalForm").reset();
+    });
+  </script>
+</body>
+</html>

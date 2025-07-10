@@ -1,0 +1,37 @@
+/* Common welcome box styling */
+.welcome-box {
+  padding: 30px;
+  border-radius: 15px;
+  color: white;
+  animation: fadeInUp 1.2s ease;
+  font-family: 'Segoe UI', sans-serif;
+  margin-bottom: 2rem;
+}
+
+/* Tier-based styles */
+.tier-owner {
+  background: linear-gradient(135deg, #6f42c1, #b07fff);
+  box-shadow: 0 0 30px rgba(111, 66, 193, 0.6);
+}
+
+.tier-admin {
+  background: linear-gradient(135deg, #198754, #42e695);
+  box-shadow: 0 0 25px rgba(25, 135, 84, 0.5);
+}
+
+.tier-member {
+  background: linear-gradient(135deg, #0d6efd, #66bfff);
+  box-shadow: 0 0 20px rgba(13, 110, 253, 0.4);
+}
+
+/* Fade In Up animation */
+@keyframes fadeInUp {
+  0% {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0px);
+    opacity: 1;
+  }
+}
