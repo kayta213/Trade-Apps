@@ -1,0 +1,62 @@
+<script>
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user || user.role !== "admin") {
+    alert("Access denied.");
+    window.location.href = "login.html";
+  }
+
+  document.getElementById("welcomeMessage").textContent = `Welcome, ${user.username} 👋`;
+  document.getElementById("roleTier").textContent = `You are logged in as: ${user.role.toUpperCase()}`;
+  document.getElementById("welcomeBox").classList.add(`tier-${user.role}`);
+
+  new TradingView.widget({
+    autosize: true,
+    symbol: "BINANCE:BTCUSDT",
+    interval: "30",
+    timezone: "Etc/UTC",
+    theme: "light",
+    style: "1",
+    locale: "en",
+    toolbar_bg: "#f1f3f6",
+    enable_publishing: false,
+    hide_side_toolbar: false,
+    hide_top_toolbar: false,
+    allow_symbol_change: true,
+    container_id: "tradingview_chart"
+  });
+
+  function logout() {
+    localStorage.removeItem("currentUser");
+    window.location.href = "login.html";
+  }
+
+  // 👉 Tambahkan script ini
+  document.getElementById("signalForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const pair = document.getElementById("pair").value.trim();
+    const action = document.getElementById("action").value;
+    const entry = parseFloat(document.getElementById("entry").value);
+    const tp = parseFloat(document.getElementById("tp").value);
+    const sl = parseFloat(document.getElementById("sl").value);
+    const notes = document.getElementById("notes").value.trim();
+
+    const signals = JSON.parse(localStorage.getItem("signals")) || [];
+
+    const newSignal = {
+      pair,
+      action,
+      entry,
+      tp,
+      sl,
+      notes,
+      time: new Date().toLocaleString()
+    };
+
+    signals.unshift(newSignal);
+    localStorage.setItem("signals", JSON.stringify(signals));
+    alert("✅ Signal submitted!");
+
+    document.getElementById("signalForm").reset();
+  });
+</script>
